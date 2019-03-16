@@ -1,5 +1,7 @@
 var yaml = require('js-yaml');
 var fs   = require('fs');
+var Liquid = require('liquidjs');
+var engine = Liquid();
 
 var argv = require('minimist')(process.argv.slice(2));
 
@@ -33,7 +35,7 @@ function processComponentItems(component, items) {
 			var item = items[k];
 			var selectedComponent = component.components[item.options[item.selectedOption]];
 			item.descriptionLong = item.id + ": " + item.description;
-			item.descriptionSelected = item.descriptionLong + "(" + selectedComponent.description + " v" + selectedComponent.version + ")";
+			item.descriptionSelected = item.descriptionLong + " (" + selectedComponent.description + " v" + selectedComponent.version + ")";
 		}
 	}
 }
@@ -57,6 +59,9 @@ function parseComponent(componentPath, outDir, compModelName) {
 	component.parts = {};
 	component.tools = {};
 	
+	// set up promises array for LiquidJS
+    var liquidPromises = [];
+	
 	try {
 		// read in sub-components
 		var componentsList = fs.readdirSync(componentPath + "/components/").sort();
@@ -72,14 +77,41 @@ function parseComponent(componentPath, outDir, compModelName) {
 		processComponentItems(component, component.tools);
 		
 		component.precautions = yaml.safeLoad(fs.readFileSync(componentPath + "/precautions.yaml", 'utf8'));
+		
+		component.assemblySteps = yaml.safeLoad(fs.readFileSync(componentPath + "/assemblySteps.yaml", 'utf8'));
+		
+		for (step in component.assemblySteps) {
+			(function(s) {
+				liquidPromises.push(engine
+									.parseAndRender(component.assemblySteps[s].summary, component)
+									.then(function(renderedSummary) {
+										component.assemblySteps[s].summary = renderedSummary;
+									}).catch(function(e) {
+										console.log(e);
+									}));
+				liquidPromises.push(engine
+									.parseAndRender(component.assemblySteps[s].details, component)
+									.then(function(renderedDetails) {
+										component.assemblySteps[s].details = renderedDetails;
+									}).catch(function(e) {
+										console.log(e);
+									}));
+			})(step);
+		}
+		
 	} catch (e) {
 		console.log(e);
 	}
 
-    var componentFileName = componentPath + '/' + outDir + '/' + compModelName;
-    fs.writeFileSync(componentFileName, yaml.safeDump(component));
-
-    console.log('Component Model ' + componentFileName + ' built');
+	Promise.all(liquidPromises)
+		.then(function() {
+			var componentFileName = componentPath + '/' + outDir + '/' + compModelName;
+			fs.writeFileSync(componentFileName, yaml.safeDump(component));
+			console.log('Component Model ' + componentFileName + ' built');
+		}).catch(function(e) {
+			console.log(e);
+		});
+	
 	return component;
 }
 
