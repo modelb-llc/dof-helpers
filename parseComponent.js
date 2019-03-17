@@ -81,6 +81,7 @@ function parseComponent(componentPath, outDir, compModelName) {
 		component.assemblySteps = yaml.safeLoad(fs.readFileSync(componentPath + "/assemblySteps.yaml", 'utf8'));
 		
 		for (step in component.assemblySteps) {
+			// how I finally figured out this closure - https://daveceddia.com/waiting-for-promises-in-a-loop/#comment-3179119368
 			(function(s) {
 				liquidPromises.push(engine
 									.parseAndRender(component.assemblySteps[s].summary, component)

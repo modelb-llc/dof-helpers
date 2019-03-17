@@ -1,0 +1,117 @@
+= {{topComponent.description}} Assembly Instructions
+{{topComponent.author}}
+:revnumber: v{{topComponent.version}}
+:revdate: {{generationDate}}
+:sectnums:
+:toc:
+
+// github specific things
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+//:imagesdir: https://raw.githubusercontent.com/Mach30/dof/master/dist/images
+endif::[]
+
+// non-github specific things
+ifndef::env-github[]
+:imagesdir: ./images
+endif::[]
+
+{% for component in components %}
+== Assemble {{component.description}}
+
+// tools
+{% if component.numTools > 0 %}
+=== Tools
+|===
+|Name |Description |Notes
+{% for tool in component.tools %}
+{% assign selectedIndex = tool[1].selectedOption %}
+{% assign selectedOption = tool[1].options[selectedIndex] %}
+|{{tool[1].description}}
+|{{component.components[selectedOption].description}}
+|{{tool[1].notes}}
+{% endfor %}
+|===
+{% endif %}
+
+// materials
+{% if component.numParts > 0 %}
+=== Materials
+|===
+|Quantity |ID |Name |Description |Notes
+{% for part in component.parts %}
+{% assign selectedIndex = part[1].selectedOption %}
+{% assign selectedOption = part[1].options[selectedIndex] %}
+|{{part[1].quantity}} {{part[1].quantityUnits}}
+|{{part[1].id}}
+|{{part[1].description}}
+|{{component.components[selectedOption].description}} v{{component.components[selectedOption].version}}
+|{{part[1].notes}}
+{% endfor %}
+|===
+{% endif %}
+
+// Precautions
+{% if component.hasPrecautions %}
+=== Precautions
+{% for precaution in component.precautions %}
+* *{{component.description}}:* {{precaution}}
+{% endfor %}
+
+{% for tool in component.tools %}
+{% assign selectedIndex = tool[1].selectedOption %}
+{% assign selectedOption = tool[1].options[selectedIndex] %}
+{% for precaution in component.components[selectedOption].precautions %}
+* *{{tool[1].description}}:* {{precaution}}
+{% endfor %}
+{% endfor %}
+
+{% for part in component.parts %}
+{% assign selectedIndex = part[1].selectedOption %}
+{% assign selectedOption = part[1].options[selectedIndex] %}
+{% for precaution in component.components[selectedOption].precautions %}
+* *{{part[1].description}}:* {{precaution}}
+{% endfor %}
+{% endfor %}
+
+{% endif %}
+
+
+// Procedure
+=== Procedure
+{% for step in component.assemblySteps %}
+// summary
+{% if step.summary.length > 0 %}
+==== {{step.summary}}
+{% endif %}
+
+// requiredTools
+{% if step.requiredTools.length > 0 %}
+*Required Tools*
+{% for tool in step.requiredTools %}
+* {{component.tools[tool].description}}
+{% endfor %}
+{% endif %}
+
+// requiredParts
+{% if step.requiredParts.length > 0 %}
+*Required Parts*
+{% for part in step.requiredParts %}
+* {{component.parts[part].description}}
+{% endfor %}
+{% endif %}
+
+// details
+{% if step.details.length > 0 %}
+*Instructions*
+
+{{step.details}}
+{% endif %}
+
+{% endfor %}
+
+{% endfor %}
