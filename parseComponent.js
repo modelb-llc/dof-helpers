@@ -52,6 +52,11 @@ function parseComponent(componentPath, outDir, compModelName) {
 	component.description = packageData.description;
 	component.license = packageData.license;
 	component.author = packageData.author;
+	
+	if (packageData.hasOwnProperty('repository')) {
+		component.repository = packageData.repository;
+	}
+	
 	component.dependencies = packageData.dependencies;
 	
 	// set up dictionaries

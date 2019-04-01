@@ -1,6 +1,6 @@
 {
     "name": "dof-helpers",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "DOF Helper Scripts",
     "dependencies": {
         "js-yaml": "^3.12.0",
